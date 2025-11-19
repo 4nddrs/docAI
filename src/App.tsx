@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Menu, X, Heart, Calendar, MapPin, MessageCircle, User, FileText, Hospital, Activity, Settings, LogOut, Pill, Users, Zap, Shield, HelpCircle, Leaf, Moon, Sun } from 'lucide-react';
+import { Menu, X, Heart, Calendar, MapPin, MessageCircle, User, FileText, Hospital, Activity, Settings, LogOut, Pill, Users, Zap, Shield, HelpCircle, Leaf, Moon, Sun, CreditCard } from 'lucide-react';
 import { ThemeProvider, useTheme } from './contexts/ThemeContext';
 import { Button } from './components/ui/button';
 import { Input } from './components/ui/input';
@@ -27,8 +27,10 @@ import { AdminPanelScreen } from './components/AdminPanelScreen';
 import { DoctorAgendaScreen } from './components/DoctorAgendaScreen';
 import { DoctorPatientsScreen } from './components/DoctorPatientsScreen';
 import { DoctorProfileScreen } from './components/DoctorProfileScreen';
+import { SubscriptionScreen } from './components/SubscriptionScreen';
+import { PaymentQRScreen } from './components/PaymentQRScreen';
 
-type Screen = 'splash' | 'auth' | 'home' | 'profile' | 'chat' | 'postulation' | 'hospitals' | 'history' | 'appointment' | 'medications' | 'sensors' | 'family' | 'emergency' | 'natural-medicine' | 'help' | 'doctor-postulation' | 'admin-panel' | 'doctor-agenda' | 'doctor-patients' | 'doctor-profile';
+type Screen = 'splash' | 'auth' | 'home' | 'profile' | 'chat' | 'postulation' | 'hospitals' | 'history' | 'appointment' | 'medications' | 'sensors' | 'family' | 'emergency' | 'natural-medicine' | 'help' | 'doctor-postulation' | 'admin-panel' | 'doctor-agenda' | 'doctor-patients' | 'doctor-profile' | 'subscription' | 'payment-qr';
 
 type UserRole = 'patient' | 'doctor' | 'nurse' | 'admin';
 
@@ -40,6 +42,7 @@ const AppContent = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [userRole, setUserRole] = useState<UserRole>('patient');
   const [showTermsModal, setShowTermsModal] = useState(false);
+  const [selectedPlan, setSelectedPlan] = useState<{ id: string; name: string; price: number } | null>(null);
 
   // Check for persisted session
   useEffect(() => {
@@ -85,6 +88,7 @@ const AppContent = () => {
         { id: 'natural-medicine', icon: <Leaf className="w-5 h-5" />, label: 'Medicina Natural' },
         { id: 'doctor-postulation', icon: <FileText className="w-5 h-5" />, label: 'Ser Doctor' },
         { id: 'profile', icon: <User className="w-5 h-5" />, label: 'Perfil' },
+        { id: 'subscription', icon: <CreditCard className="w-5 h-5" />, label: 'Suscripción' },
       ];
     }
   };
@@ -182,6 +186,32 @@ const AppContent = () => {
         return <DoctorPatientsScreen />;
       case 'doctor-profile':
         return <DoctorProfileScreen />;
+      case 'subscription':
+        return <SubscriptionScreen 
+          onSelectPlan={(planId, planName, price) => {
+            setSelectedPlan({ id: planId, name: planName, price });
+            setCurrentScreen('payment-qr');
+          }} 
+        />;
+      case 'payment-qr':
+        return selectedPlan ? (
+          <PaymentQRScreen 
+            planName={selectedPlan.name}
+            price={selectedPlan.price}
+            onBack={() => setCurrentScreen('subscription')}
+            onPaymentComplete={() => {
+              setCurrentScreen('home');
+              setSelectedPlan(null);
+            }}
+          />
+        ) : (
+          <SubscriptionScreen 
+            onSelectPlan={(planId, planName, price) => {
+              setSelectedPlan({ id: planId, name: planName, price });
+              setCurrentScreen('payment-qr');
+            }} 
+          />
+        );
       default:
         return <HomeScreen onNavigate={handleScreenChange} userRole={userRole} />;
     }
